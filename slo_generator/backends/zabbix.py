@@ -18,8 +18,12 @@ Zabbix backend implementation.
 
 from pyzabbix import ZabbixAPI
 import logging
+import time
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 LOGGER = logging.getLogger(__name__)
+
 
 class ZabbixBackend:
     """Backend for querying metrics from Zabbix.
@@ -47,9 +51,17 @@ class ZabbixBackend:
             float: SLI value.
         """
         measurement = slo_config['spec']['service_level_indicator']
-        service_id = measurement['service_id']
-        sla_id= measurement['sla_id']
-        response = self.client.sla.getsli(serviceids=service_id, slaid=sla_id, period_from=timestamp - window, period_to=timestamp, periods=1)
-        sli_value = response.get("sli")[0][0].get("sli")
+        service_id = measurement['service_id'] #serive_id "Firewall Cluster (Availability)"
+
+        if window == 3600:
+            response = self.client.sla.getsli(slaid=service_id, period_from=int(timestamp - window), periods=1)
+        nb_day = timestamp/86400
+        if nb_day:
+            total_downtime, total_uptime = 0, 0
+            response = self.client.sla.getsli(slaid=service_id, period_from=int(timestamp - window), period_to=int(timestamp))
+            for period in response.get("sli"):
+                total_downtime += period[0].get("downtime")
+                total_uptime += period[0].get("uptime")
+        sli_value = 100 - total_downtime/total_uptime * 100
         LOGGER.debug(f"SLI value: {sli_value}")
-        return sli_value/100
+        return sli_value
