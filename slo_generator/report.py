@@ -118,6 +118,10 @@ class SLOReport:
         if not self._validate(data):
             self.valid = False
             return
+        
+        # Set backend in error log to ease debug
+        error = f"Backend : {self.backend}"
+        self.errors.append(error)
 
         # Build SLO report
         self.build(step, data)
