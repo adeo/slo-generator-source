@@ -16,6 +16,7 @@
 Stubs for mocking backends and exporters.
 """
 import json
+import logging
 import os
 import sys
 import time
@@ -23,7 +24,17 @@ from types import ModuleType
 
 from google.cloud import monitoring_v3
 
+from slo_generator.constants import DEBUG
 from slo_generator.utils import load_config, load_configs
+
+# TODO: This probably should not be done there (see utils.setup_logging())
+LOGGER = logging.getLogger()
+handler = logging.StreamHandler(sys.stdout)
+LOGGER.addHandler(handler)
+if DEBUG == 1:
+    LOGGER.setLevel(logging.DEBUG)
+else:
+    LOGGER.setLevel(logging.INFO)
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
 SAMPLE_DIR = os.path.join(os.path.dirname(os.path.dirname(TEST_DIR)), "samples/")
