@@ -221,12 +221,22 @@ class SLOReport:
             LOGGER.info(f"{self.info} | Delete mode enabled.")
 
         # Run backend method and return results.
+        data = None
         try:
             data = method(self.timestamp, self.window, config)
-            LOGGER.debug(f"{self.info} | Backend response: {data}")
+            LOGGER.debug(
+                f"{self.info} | Backend response: {data}"
+                f" | method: {cls_name}.{method.__name__}"
+            )
         except Exception as exc:  # pylint:disable=broad-except
-            self.errors.append(utils.fmt_traceback(exc))
-            return None
+            self.errors.append(f"[Unexpected Exception] {utils.fmt_traceback(exc)}")
+            self.errors.append(f"method: {cls_name}.{method.__name__}")
+            LOGGER.debug(
+                f"{self.info} | Backend response: {data}"
+                f" | method: {cls_name}.{method.__name__}"
+            )
+            data = None
+
         return data
 
     def get_sli(self, data):
