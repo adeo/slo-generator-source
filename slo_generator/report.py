@@ -267,7 +267,7 @@ class SLOReport:
             LOGGER.debug(f"{self.info} | Good: {good_count} | Bad: {bad_count}")
             try:
                 sli_measurement = round(good_count / (good_count + bad_count), 6)
-            except (ZeroDivisionError) : 
+            except ZeroDivisionError:
                 # 0 events = 100% SLI
                 sli_measurement = 1
         else:  # sli value
@@ -368,12 +368,6 @@ class SLOReport:
             self.errors.append(error)
             return False
 
-        # Check backend None
-        if data is None:
-            error = "Backend returned None."
-            self.errors.append(error)
-            return False
-
         return True
 
     def _post_validate(self) -> bool:
@@ -408,7 +402,10 @@ class SLOReport:
     @property
     def info(self) -> str:
         """Step information."""
-        return f"backend: {self.backend :<32} | name: {self.name :<32} | policy: {self.error_budget_policy_step_name :<8}"
+        return (
+            f"backend: {self.backend :<32} | name: {self.name :<32}"
+            f" | policy: {self.error_budget_policy_step_name :<8}"
+        )
 
     def __str__(self) -> str:
         report = self.to_json()
