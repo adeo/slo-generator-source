@@ -218,6 +218,21 @@ def mock_es(self, index, body):
     return {"hits": {"total": {"value": 120}}}
 
 
+def mock_dd_400_bad_request(*args, **kwargs):
+    """Mock Datadog response for datadog.api.ServiceLevelObjective.history."""
+    return load_fixture("dd_400_bad_request.json")
+
+
+def mock_dd_404_not_found(*args, **kwargs):
+    """Mock Datadog response for datadog.api.ServiceLevelObjective.history."""
+    return load_fixture("dd_404_not_found.json")
+
+
+def mock_dd_429_rate_limit(*args, **kwargs):
+    """Mock Datadog response for datadog.api.ServiceLevelObjective.history."""
+    return load_fixture("dd_429_rate_limit.json")
+
+
 def mock_dd_metric_query(*args, **kwargs):
     """Mock Datadog response for datadog.api.Metric.query."""
     return load_fixture("dd_timeseries.json")
