@@ -131,6 +131,12 @@ class DatadogBackend:
             from_ts=from_ts,
             to_ts=timestamp,
         )
+
+        if data is None:
+            raise Exception("Backend response is empty")
+        if "errors" in data and data["errors"] and len(data["errors"]) > 1:
+            raise Exception(f'{data["errors"][0]}')
+
         try:
             LOGGER.debug(f"Timeseries data: {slo_id} | Result: {pprint.pformat(data)}")
             good_event_count = data["data"]["series"]["numerator"]["sum"]
@@ -138,12 +144,19 @@ class DatadogBackend:
             bad_event_count = valid_event_count - good_event_count
             return (good_event_count, bad_event_count)
         except (KeyError) as exception:  # monitor-based SLI
-            try : 
-                sli_value = data["data"]["overall"]["sli_value"] / 100
-                LOGGER.debug(exception)
-                return sli_value
-            except (KeyError) as exception:  # no events
-                return (0, 0)
+            #            try :
+            sli_value = data["data"]["overall"]["sli_value"] / 100
+            LOGGER.debug(exception)
+            return sli_value
+
+    #            except (KeyError) as exception:  # no events
+    #                return (0, 0)
+
+    #        except Exception as exception:  # monitor-based SLI
+    #            LOGGER.debug(exception)
+    #            return (0, 0)
+    #
+    #        return (-1, -1)
 
     @staticmethod
     def _fmt_query(query, window, operator=None, operator_suffix=None):
