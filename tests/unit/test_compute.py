@@ -31,6 +31,9 @@ from .test_stubs import (
     load_fixture,
     load_sample,
     load_slo_samples,
+    mock_dd_400_bad_request,
+    mock_dd_404_not_found,
+    mock_dd_429_rate_limit,
     mock_dd_metric_query,
     mock_dd_metric_send,
     mock_dd_slo_get,
@@ -133,6 +136,44 @@ class TestCompute(unittest.TestCase):
         for config in SLO_CONFIGS_DT:
             with self.subTest(config=config):
                 compute(config, CONFIG)
+
+    @patch.object(Metric, "query", mock_dd_metric_query)
+    @patch.object(ServiceLevelObjective, "history", mock_dd_400_bad_request)
+    @patch.object(ServiceLevelObjective, "get", mock_dd_slo_get)
+    def test_compute_datadog_query_slo_400_bad_request(self):
+        config = load_sample("datadog/slo_dd_app_availability_query_slo.yaml", CTX)
+        with self.subTest(config=config):
+            reports = compute(config, CONFIG)
+            self.assertFalse(reports[0]["valid"])
+            self.assertFalse("sli_measurement" in reports[0])
+            # TODO: we should be able to check assertions about 400 errors
+            # self.assertGreaterEqual(len(reports[0]["errors"]), 1)
+            # self.assertNotIn("[Unexpected Exception] ", reports[0]["errors"][0])
+
+    @patch.object(Metric, "query", mock_dd_metric_query)
+    @patch.object(ServiceLevelObjective, "history", mock_dd_404_not_found)
+    @patch.object(ServiceLevelObjective, "get", mock_dd_slo_get)
+    def test_compute_datadog_query_slo_404_not_found(self):
+        config = load_sample("datadog/slo_dd_app_availability_query_slo.yaml", CTX)
+        with self.subTest(config=config):
+            reports = compute(config, CONFIG)
+            self.assertFalse(reports[0]["valid"])
+            self.assertFalse("sli_measurement" in reports[0])
+            # TODO: we should be able to check assertions about 404 errors
+            # self.assertNotIn("[Unexpected Exception] ", reports[0]["errors"][0])
+            # self.assertIn("not found", reports[0]["errors"][0])
+
+    @patch.object(Metric, "query", mock_dd_metric_query)
+    @patch.object(ServiceLevelObjective, "history", mock_dd_429_rate_limit)
+    @patch.object(ServiceLevelObjective, "get", mock_dd_slo_get)
+    def test_compute_datadog_query_slo_429_rate_limit(self):
+        config = load_sample("datadog/slo_dd_app_availability_query_slo.yaml", CTX)
+        with self.subTest(config=config):
+            reports = compute(config, CONFIG)
+            self.assertFalse(reports[0]["valid"])
+            self.assertFalse("sli_measurement" in reports[0])
+            # TODO: we should be able to check assertions about 429 errors
+            # self.assertNotIn("[Unexpected Exception] ", reports[0]["errors"][0])
 
     @patch(PUBSUB_MOCKS[0])
     @patch(PUBSUB_MOCKS[1])
