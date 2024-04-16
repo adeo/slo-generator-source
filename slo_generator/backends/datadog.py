@@ -141,7 +141,7 @@ class DatadogBackend:
                     apply_correction=False
                 )
                 LOGGER.debug(f"Result data_without_correction: {pprint.pformat(data_without_correction)}")
-                slo_config["metadata"]["sli_not_corrected"] = data_without_correction["data"]["overall"]["sli_value"]
+                slo_config["metadata"]["sli_not_corrected"] = data_without_correction["data"]["overall"]["sli_value"]/100
             except:
                 LOGGER.debug(f"data_without_correction retrieval failed for SLO: {slo_id}")
 
