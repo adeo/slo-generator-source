@@ -82,7 +82,32 @@ class BigqueryExporter:
                 }
                 for key, value in metadata.items()
             ]
-            json_data["metadata"] = metadata_fields
+        json_data["metadata"] = metadata_fields
+        if "correction" in json_data:
+            versions = json_data.get("correction", {})
+            metadata_fields = []
+            for key, value in versions.items():
+                    if key.startswith("version") and "sli_value" in value and "numerator" in value and "bad_series" in value and "values" in value["numerator"]:
+                        correct_slo = {
+                                "version": key.split(":")[-1],
+                                "sli_value": round(value["sli_value"], 2),
+                                "good_event": sum(value["numerator"]["values"]),
+                                "bad_event": sum(value["bad_series"])
+                            }
+                        metadata_fields.append(correct_slo)
+            json_data["correction"] = metadata_fields
+        else:
+            metadata_fields = [
+                        {
+                            "version": "no_value",
+                            "sli_value": 0,
+                            "good_event": 0,
+                            "bad_event": 0
+                        }
+            ]
+            json_data["correction"] = metadata_fields
+
+
 
         # Write results to BQ table
         if constants.DRY_RUN:
@@ -349,6 +374,33 @@ TABLE_SCHEMA = [
             {
                 "name": "value",
                 "type": "STRING",
+                "mode": "NULLABLE",
+            },
+        ],
+    },
+    {
+        "name": "correction",
+        "type": "RECORD",
+        "mode": "REPEATED",
+        "fields": [
+            {
+                "name": "version",
+                "type": "STRING",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "sli_value",
+                "type": "FLOAT",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "good_event",
+                "type": "INTEGER",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "bad_event",
+                "type": "INTEGER",
                 "mode": "NULLABLE",
             },
         ],
