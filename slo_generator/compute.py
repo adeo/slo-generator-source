@@ -141,7 +141,7 @@ def export(data: dict, exporters: list, raise_on_error: bool = False) -> list:
             if cls not in constants.V2_EXPORTERS:
                 LOGGER.debug(f"{info} | Converting SLO report to v1.")
                 json_data = report_v2tov1(data)
-                if json_data['metadata']['source'] == 'datadog' and slo_generator.backends.datadog.slo_data != {} and "correction" in json_data:
+                if json_data['metadata']['source'] == 'datadog' and slo_generator.backends.datadog.slo_data != {}:
                     json_data["correction"] = slo_generator.backends.datadog.slo_data.get("groups", {})
             LOGGER.debug(f"{info} | SLO report: {json_data}")
             response = instance().export(json_data, **exporter)
