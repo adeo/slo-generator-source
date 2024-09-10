@@ -137,26 +137,52 @@ class DatadogBackend:
         Returns:
             tuple: Good event count, bad event count.
         """
+        global slo_data
+        slo_data = {}
         slo_id = slo_config["spec"]["service_level_indicator"]["slo_id"]
         from_ts = timestamp - window
         if utils.is_debug_enabled():
             slo_data = self.client.ServiceLevelObjective.get(id=slo_id)
             LOGGER.debug(f"SLO data: {slo_id} | Result: {pprint.pformat(slo_data)}")
+
         data = self.client.ServiceLevelObjective.history(
             id=slo_id,
             from_ts=from_ts,
             to_ts=timestamp,
         )
+        if "data" in data and "series" in data["data"] and "groups" in data["data"]["series"]:
+            slo_data = data["data"]["series"]
+
+        # check if a correction is set
+        if len(data["data"]["overall"]["corrections"]) != 0:
+            try:
+                # query slo without correction
+                data_without_correction = self.client.ServiceLevelObjective.history(
+                    id=slo_id,
+                    from_ts=from_ts,
+                    to_ts=timestamp,
+                    apply_correction=False
+                )
+                LOGGER.debug(f"Result data_without_correction: {pprint.pformat(data_without_correction)}")
+                slo_config["metadata"]["sli_not_corrected"] = data_without_correction["data"]["overall"]["sli_value"]/100
+            except:
+                LOGGER.debug(f"data_without_correction retrieval failed for SLO: {slo_id}")
+
         try:
             LOGGER.debug(f"Timeseries data: {slo_id} | Result: {pprint.pformat(data)}")
             good_event_count = data["data"]["series"]["numerator"]["sum"]
             valid_event_count = data["data"]["series"]["denominator"]["sum"]
             bad_event_count = valid_event_count - good_event_count
             return (good_event_count, bad_event_count)
-        except KeyError as exception:  # monitor-based SLI
-            sli_value = data["data"]["overall"]["sli_value"] / 100
-            LOGGER.debug(exception)
-            return sli_value
+
+        except (KeyError) as exception:  # monitor-based SLI
+            try : 
+                sli_value = data["data"]["overall"]["sli_value"] / 100
+                LOGGER.debug(exception)
+                return sli_value
+            except (KeyError) as exception:  # no events
+                return (0, 0)
+
 
     @staticmethod
     def _fmt_query(query, window, operator=None, operator_suffix=None):

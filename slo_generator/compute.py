@@ -24,7 +24,7 @@ from typing import Optional
 from slo_generator import constants, utils
 from slo_generator.migrations.migrator import report_v2tov1
 from slo_generator.report import SLOReport
-
+import slo_generator.backends.datadog 
 LOGGER = logging.getLogger(__name__)
 
 
@@ -66,6 +66,11 @@ def compute(
     backend = utils.get_backend(config, spec)
     reports = []
     for step in error_budget_policy["steps"]:
+        if step["name"] == "current_month":
+            current_month = time.localtime(start).tm_mon
+            current_year = time.localtime(start).tm_year
+            first_day_of_month = time.mktime((current_year, current_month, 1, 0, 0, 0, 0, 0, 0))
+            step["window"] = int(start - first_day_of_month) 
         report = SLOReport(
             config=slo_config,
             backend=backend,
@@ -136,6 +141,8 @@ def export(data: dict, exporters: list, raise_on_error: bool = False) -> list:
             if cls not in constants.V2_EXPORTERS:
                 LOGGER.debug(f"{info} | Converting SLO report to v1.")
                 json_data = report_v2tov1(data)
+                if json_data['metadata']['source'] == 'datadog' and slo_generator.backends.datadog.slo_data != {}:
+                    json_data["correction"] = slo_generator.backends.datadog.slo_data.get("groups", {})
             LOGGER.debug(f"{info} | SLO report: {json_data}")
             response = instance().export(json_data, **exporter)
             LOGGER.info(f'{info} | SLO report sent to "{name}" exporter successfully.')

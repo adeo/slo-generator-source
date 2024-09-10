@@ -207,7 +207,7 @@ class CloudMonitoringBackend:
         request.interval = measurement_window
         request.view = monitoring_v3.ListTimeSeriesRequest.TimeSeriesView.FULL
         request.aggregation = aggregation
-        timeseries = self.client.list_time_series(request)
+        timeseries = self.client.list_time_series(request,timeout=60.0)
         LOGGER.debug(pprint.pformat(timeseries))
         return timeseries
 
@@ -224,8 +224,9 @@ class CloudMonitoringBackend:
         """
         try:
             return timeseries[0].points[0].value.int64_value
-        except (IndexError, AttributeError) as exception:
-            LOGGER.debug(exception, exc_info=True)
+        #except (IndexError, AttributeError) as exception:
+        #    LOGGER.debug(exception, exc_info=True)
+        except:
             return NO_DATA  # no events in timeseries
 
     @staticmethod
