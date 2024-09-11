@@ -154,7 +154,7 @@ class DatadogBackend:
             slo_data = data["data"]["series"]
 
         # check if a correction is set
-        if len(data["data"]["overall"]["corrections"]) != 0:
+        if "corrections" in data["data"]["overall"] and  len(data["data"]["overall"]["corrections"]) != 0:
             try:
                 # query slo without correction
                 data_without_correction = self.client.ServiceLevelObjective.history(
