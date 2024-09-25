@@ -24,7 +24,6 @@ from typing import Optional
 from slo_generator import constants, utils
 from slo_generator.migrations.migrator import report_v2tov1
 from slo_generator.report import SLOReport
-import slo_generator.backends.datadog 
 LOGGER = logging.getLogger(__name__)
 
 
@@ -141,8 +140,8 @@ def export(data: dict, exporters: list, raise_on_error: bool = False) -> list:
             if cls not in constants.V2_EXPORTERS:
                 LOGGER.debug(f"{info} | Converting SLO report to v1.")
                 json_data = report_v2tov1(data)
-                if json_data['metadata']['source'] == 'datadog' and slo_generator.backends.datadog.slo_data != {}:
-                    json_data["correction"] = slo_generator.backends.datadog.slo_data.get("groups", {})
+                if 'metadata' in json_data and 'source' in json_data['metadata'] and json_data['metadata']['source'] == 'datadog' and constants.slo_correction != {}:
+                    json_data["correction"] = constants.slo_correction.get("groups", {})
             LOGGER.debug(f"{info} | SLO report: {json_data}")
             response = instance().export(json_data, **exporter)
             LOGGER.info(f'{info} | SLO report sent to "{name}" exporter successfully.')
