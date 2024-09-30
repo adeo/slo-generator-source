@@ -18,6 +18,10 @@ Constants and environment variables used in `slo-generator`.
 import os
 from typing import Dict, List, Tuple
 
+
+global slo_correction
+slo_correction: dict = {}
+
 # Compute
 NO_DATA: int = -1
 MIN_VALID_EVENTS: int = int(os.environ.get("MIN_VALID_EVENTS", "0"))

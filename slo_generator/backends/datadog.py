@@ -21,7 +21,7 @@ import pprint
 
 import datadog
 
-from slo_generator import utils
+from slo_generator import utils, constants
 
 LOGGER = logging.getLogger(__name__)
 logging.getLogger("datadog.api").setLevel(logging.ERROR)
@@ -137,8 +137,8 @@ class DatadogBackend:
         Returns:
             tuple: Good event count, bad event count.
         """
-        global slo_data
-        slo_data = {}
+        # global slo_correction
+        # slo_correction = {}
         slo_id = slo_config["spec"]["service_level_indicator"]["slo_id"]
         from_ts = timestamp - window
         if utils.is_debug_enabled():
@@ -151,7 +151,7 @@ class DatadogBackend:
             to_ts=timestamp,
         )
         if "data" in data and "series" in data["data"] and "groups" in data["data"]["series"]:
-            slo_data = data["data"]["series"]
+            constants.slo_correction = data["data"]["series"]
 
         # check if a correction is set
         if "corrections" in data["data"]["overall"] and  len(data["data"]["overall"]["corrections"]) != 0:
